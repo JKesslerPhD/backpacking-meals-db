@@ -124,6 +124,7 @@ LEFT JOIN nutrition n ON n.product_id = p.id
 LEFT JOIN ingredients i ON i.product_id = p.id
 WHERE p.kind = 'meal';
 
+DROP VIEW IF EXISTS v_optimizer;
 -- One row per thing a hiker actually carries and eats, in package-independent "portion" terms.
 --   pouch / single-serve meals  -> portion = the whole package
 --   cans, tubs, bulk powders    -> portion = one serving (weight from the serving size in grams)
@@ -131,6 +132,8 @@ CREATE VIEW IF NOT EXISTS v_optimizer AS
 SELECT id, brand, name, format, url, kind_of_portion,
        portion_label, portion_g, portion_kcal, portion_protein_g, portion_carbs_g, portion_fat_g,
        portion_fiber_g, portion_sodium_mg, portion_price_usd,
+       portion_sugars_g, portion_satfat_g, portion_chol_mg, portion_calcium_mg, portion_iron_mg,
+       portion_potassium_mg, portion_vitd_mcg,
        ROUND(portion_kcal / (portion_g / 28.3495), 1) AS kcal_per_oz,
        ROUND(portion_kcal / portion_g, 3) AS kcal_per_g,
        weight_src, needs_review
@@ -144,6 +147,9 @@ FROM (
          -- nutrient columns are stored per `basis`; scale to the portion
          n.calories * k.f AS portion_kcal, n.protein_g * k.f AS portion_protein_g, n.carbs_g * k.f AS portion_carbs_g,
          n.total_fat_g * k.f AS portion_fat_g, n.fiber_g * k.f AS portion_fiber_g, n.sodium_mg * k.f AS portion_sodium_mg,
+         n.sugars_g * k.f AS portion_sugars_g, n.sat_fat_g * k.f AS portion_satfat_g, n.cholesterol_mg * k.f AS portion_chol_mg,
+         n.calcium_mg * k.f AS portion_calcium_mg, n.iron_mg * k.f AS portion_iron_mg,
+         n.potassium_mg * k.f AS portion_potassium_mg, n.vitamin_d_mcg * k.f AS portion_vitd_mcg,
          p.price_usd * k.pf AS portion_price_usd, p.weight_src, n.needs_review
   FROM products p
   JOIN nutrition n ON n.product_id = p.id
@@ -987,9 +993,12 @@ def stage_export(conn):
     """Write foods.csv / foods.json: one row per carryable portion, full nutrition + ingredients."""
     import csv
     rows = conn.execute("""
-        SELECT o.brand, o.name, o.format, o.kind_of_portion AS portion_type, o.portion_label, o.portion_g,
+        SELECT o.id AS product_id, o.brand, o.name, o.format, o.kind_of_portion AS portion_type, o.portion_label, o.portion_g,
                o.portion_kcal AS kcal, o.portion_protein_g AS protein_g, o.portion_carbs_g AS carbs_g,
                o.portion_fat_g AS fat_g, o.portion_fiber_g AS fiber_g, o.portion_sodium_mg AS sodium_mg,
+               o.portion_sugars_g AS sugars_g, o.portion_satfat_g AS sat_fat_g, o.portion_chol_mg AS cholesterol_mg,
+               o.portion_calcium_mg AS calcium_mg, o.portion_iron_mg AS iron_mg, o.portion_potassium_mg AS potassium_mg,
+               o.portion_vitd_mcg AS vitamin_d_mcg,
                o.kcal_per_oz, o.portion_price_usd AS price_usd, o.weight_src, o.needs_review,
                p.servings_per_container, p.serving_desc, i.allergens, i.text AS ingredients, o.url
         FROM v_optimizer o JOIN products p ON p.id = o.id LEFT JOIN ingredients i ON i.product_id = o.id

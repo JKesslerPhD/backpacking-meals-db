@@ -3,3 +3,4 @@ __pycache__/
 *.pyc
 verify/
 methodology*.html
+server_pull/
