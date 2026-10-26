@@ -64,6 +64,17 @@ The 16 `shipping` rows are Mountain House Pro-Paks. Treat them as upper bounds.
 
 For each row with fat `F`, carbohydrate `C` and protein `P` in grams, the Atwater estimate `4P + 4C + 9F` should be within 20% of the labeled calories; saturated fat must not exceed total fat, and sugars must not exceed carbohydrate. Rows that fail are flagged `needs_review`. As the OCR experience shows, this catches gross errors only.
 
+### Known source conflicts
+
+Page text and label image disagree for two Peak Refuel products. For both, the page's calories and protein are used and the row is flagged `needs_review` with a note (other nutrients come from the label and may be off):
+
+| Product | Page | Label image |
+|---|---|---|
+| MeatEater American Buffalo Goulash | 740 kcal, 45 g protein | 890 kcal, 55 g protein |
+| Butternut Dal Bhat | 920 kcal, 24 g protein | 870 kcal, 23 g protein |
+
+All other Peak and Backpacker's Pantry products agree between page and label within 3% (calories) and 8% (protein). A physical pouch would settle which is current.
+
 ## Limits
 
 - Facts only; no images are redistributed. Brand, product, and ingredient text belong to their owners.

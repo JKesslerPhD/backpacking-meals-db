@@ -968,6 +968,8 @@ def stage_manual(conn):
             if vals:
                 basis = row.get("basis") or "package"
                 review, note = check_macros(vals)
+                if row.get("review_note"):          # documented source conflict, kept for the record
+                    review, note = 1, row["review_note"]
                 cols = ["product_id", "basis", "source", "needs_review", "review_note"] + list(vals)
                 conn.execute(f"INSERT OR REPLACE INTO nutrition ({','.join(cols)}) VALUES ({','.join('?' * len(cols))})",
                              [p["id"], basis, "manual", review, note] + list(vals.values()))
